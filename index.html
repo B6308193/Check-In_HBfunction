@@ -1,13 +1,254 @@
-// ---------- TAB 3: LUCKY DRAW ----------
-    function loadLuckyDrawCandidates() {
-      document.getElementById('winnerResult').innerHTML = "⏳ กำลังดึงข้อมูลผู้มีสิทธิ์...";
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in System - Aloha 2026</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    body { font-family: 'Kanit', sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 15px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 450px; margin: 0 auto; }
+    
+    /* Nav Tabs */
+    .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-size: 0.95em; font-weight: bold; color: #666; cursor: pointer; }
+    .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* UI Common */
+    #reader { width: 100%; border-radius: 8px; overflow: hidden; margin-top: 15px; }
+    .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-top: 10px; border: 3px solid #007bff; }
+    .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; }
+    .fulltime { background: #e3f2fd; color: #0d47a1; }
+    .outsource { background: #fff3e0; color: #e65100; }
+    .status-checked { color: green; font-weight: bold; font-size: 1.2em; }
+    .status-already { color: red; font-weight: bold; font-size: 1.2em; }
+    .btn-main { padding: 12px 24px; font-size: 1.1em; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+    .btn-start { padding: 14px 28px; font-size: 1.1em; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+    
+    /* Search UI */
+    .search-box { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
+    .user-list { text-align: left; max-height: 250px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
+    .user-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .user-item:last-child { border-bottom: none; }
+
+    /* Lucky Draw UI */
+    .wheel-container { position: relative; width: 280px; height: 280px; margin: 0 auto; }
+    #wheel { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #333; transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1); }
+    .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 24px solid red; z-index: 10; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🌺 ALOHA 2026 🌺</h2>
+
+    <script>
+      const APPS_SCRIPT_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSC142PSgMRcf7M0a8i8eAN7eLXTIiNuKT1YSwqPrtyWGwwh3RUE1cS0Fd4ftB4FjQNvvMxsQaVBJPCpI2yFKsAWAMIz75UC3noOArg45TIT9RtAtbtqQGT1W0hAi45qXPf9n-x6l8ZJ7_TOjWH8zz_5Lgx3S2RWJ_jWGPpfht2iLyRMA8ZERLH5wwbZRfqAQdxNwQcDchFWf2n-NfZSJtpzdmMBP_tjeE2Ss7z11bvIK34nPH29CTEwOrAnCysknuI_Bgr4FV3VyACM8rk0CMogK1T5A&lib=MrW837f87mv1wuJMhFT1rN20rEf2L2Iqt";
+    </script>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('scan-tab')">📷 สแกน</button>
+      <button class="tab-btn" onclick="switchTab('search-tab')">🔍 ค้นหา</button>
+      <button class="tab-btn" onclick="switchTab('draw-tab')">🎁 สุ่มรางวัล</button>
+    </div>
+
+    <!-- TAB 1: SCANNER -->
+    <div id="scan-tab" class="tab-content active">
+      <div id="reader"></div>
+      <div id="result" style="margin-top: 20px;">
+        <button class="btn-start" onclick="startCamera()">📷 กดเพื่อเริ่มสแกน</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: MANUAL SEARCH -->
+    <div id="search-tab" class="tab-content">
+      <input type="text" id="searchInput" class="search-box" placeholder="พิมพ์ชื่อ หรือ รหัสพนักงาน..." onkeyup="filterUsers()">
+      <div id="userList" class="user-list">
+        <p style="text-align:center; color:gray;">กดปุ่มด้านล่างเพื่อโหลดข้อมูลพนักงาน</p>
+      </div>
+      <button class="btn-main" onclick="loadAllEmployees()" style="margin-top:10px;">🔄 ดึง/อัปเดตรายชื่อพนักงาน</button>
+    </div>
+
+    <!-- TAB 3: LUCKY DRAW -->
+    <div id="draw-tab" class="tab-content">
+      <p style="font-size: 0.9em; color: gray;">สุ่มรางวัลเฉพาะ "พนักงานประจำ" ที่สแกนเข้างานแล้ว</p>
+      <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="280" height="280"></canvas>
+      </div>
+      <button id="spinBtn" class="btn-start" onclick="spinWheel()" style="background:#ff9800;">🎰 หมุนวงล้อสุ่มรางวัล</button>
+      <div id="winnerResult" style="margin-top: 15px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let html5QrCode;
+    let allEmployees = [];
+    let checkedFulltimeWinners = [];
+    let currentRotation = 0;
+
+    // ---------- Tab Switcher ----------
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabId !== 'scan-tab' && html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop();
+      }
+      if (tabId === 'draw-tab') {
+        loadLuckyDrawCandidates();
+      }
+    }
+
+    // ---------- JSONP Helper ----------
+    function callAppsScript(action, params, onSuccess, onError) {
+      const cbName = "jsonpCallback_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+      const script = document.createElement("script");
+
+      window[cbName] = function (data) {
+        onSuccess(data);
+        delete window[cbName];
+        script.remove();
+      };
+
+      const timeoutId = setTimeout(function () {
+        if (window[cbName]) {
+          delete window[cbName];
+          script.remove();
+          if (onError) onError("หมดเวลาเชื่อมต่อเซิร์ฟเวอร์");
+        }
+      }, 15000);
+
+      let url = APPS_SCRIPT_URL + "?callback=" + cbName + "&action=" + encodeURIComponent(action);
+      for (const key in params) {
+        url += "&" + key + "=" + encodeURIComponent(params[key]);
+      }
+
+      script.src = url;
+      document.body.appendChild(script);
+    }
+
+    // ---------- TAB 1: CAMERA SCAN ----------
+    function startCamera() {
+      document.getElementById('reader').style.display = "block";
+      document.getElementById('result').innerHTML = "⏳ กำลังเปิดกล้อง...";
+      html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccess
+      ).then(() => {
+        document.getElementById('result').innerHTML = "<p style='color:gray;'>🎯 ส่อง QR Code ให้อยู่ในกรอบ</p>";
+      }).catch(err => {
+        document.getElementById('result').innerHTML = `<p class="status-already">❌ เปิดกล้องไม่สำเร็จ</p><button class="btn-main" onclick="startCamera()">ลองเปิดกล้องอีกครั้ง</button>`;
+      });
+    }
+
+    function onScanSuccess(decodedText) {
+      html5QrCode.stop().then(() => {
+        document.getElementById('reader').style.display = "none";
+        document.getElementById('result').innerHTML = "⏳ กำลังตรวจสอบข้อมูล...";
+        processCheckin(decodedText);
+      });
+    }
+
+    function processCheckin(empId) {
+      callAppsScript("checkin", { id: empId }, showEmployeeData, function(err) {
+        document.getElementById('result').innerHTML = `<p class="status-already">❌ ${err}</p><button class="btn-main" onclick="resetToScan()">ลองใหม่</button>`;
+      });
+    }
+
+    function showEmployeeData(res) {
+      const resultDiv = document.getElementById('result');
+      if (!res.success) {
+        resultDiv.innerHTML = `<p class="status-already">❌ ${res.message}</p><button class="btn-main" onclick="resetToScan()">สแกนคนต่อไป ➔</button>`;
+        return;
+      }
+      const emp = res.data;
+      const badgeClass = emp.type === "Outsource" ? "outsource" : "fulltime";
+      const statusText = res.alreadyChecked ? `<p class="status-already">⚠️ เคยสแกนเข้างานไปแล้ว!</p>` : `<p class="status-checked">✅ สแกนเข้างานสำเร็จ!</p>`;
+      const imgUrl = emp.image !== "" ? emp.image : "https://via.placeholder.com/150?text=No+Image";
+
+      resultDiv.innerHTML = `
+        ${statusText}
+        <img src="${imgUrl}" class="profile-img"><br>
+        <span class="badge ${badgeClass}">${emp.type}</span>
+        <h3>${emp.name}</h3>
+        <p><strong>รหัส:</strong> ${emp.id} | <strong>ส่วนงาน:</strong> ${emp.dept}</p>
+        <button class="btn-main" onclick="resetToScan()">สแกนคนต่อไป ➔</button>
+      `;
+    }
+
+    function resetToScan() {
+      document.getElementById('result').innerHTML = "";
+      startCamera();
+    }
+
+    // ---------- TAB 2: MANUAL SEARCH ----------
+    function loadAllEmployees() {
+      document.getElementById('userList').innerHTML = "<p style='text-align:center;'>⏳ กำลังโหลดข้อมูล...</p>";
       callAppsScript("getAll", {}, function(res) {
         if (res.success) {
-          // กรองเฉพาะ: พนักงานประจำ + เช็คอินแล้ว + ยังไม่เคยได้รับรางวัล (giftClaimed === false)
+          allEmployees = res.data;
+          renderUserList(allEmployees);
+        }
+      });
+    }
+
+    function renderUserList(list) {
+      const container = document.getElementById('userList');
+      if (list.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:gray;'>ไม่พบข้อมูล</p>";
+        return;
+      }
+      let html = "";
+      list.forEach(emp => {
+        const btnText = emp.checked ? "สแกนแล้ว" : "เช็คอิน";
+        const btnStyle = emp.checked ? "background:#6c757d;" : "background:#28a745;";
+        html += `
+          <div class="user-item">
+            <div>
+              <strong>${emp.name}</strong> (${emp.id})<br>
+              <small style="color:gray;">${emp.dept} | ${emp.type}</small>
+            </div>
+            <button style="padding:5px 10px; color:white; border:none; border-radius:4px; ${btnStyle}" 
+              ${emp.checked ? 'disabled' : ''} onclick="manualCheckin('${emp.id}')">${btnText}</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function filterUsers() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allEmployees.filter(e => e.name.toLowerCase().includes(keyword) || e.id.toLowerCase().includes(keyword));
+      renderUserList(filtered);
+    }
+
+    function manualCheckin(id) {
+      if (confirm(`ยืนยันการเช็คอินรหัส ${id} ?`)) {
+        processCheckin(id);
+        switchTab('scan-tab');
+      }
+    }
+
+    // ---------- TAB 3: LUCKY DRAW ----------
+    function loadLuckyDrawCandidates() {
+      document.getElementById('winnerResult').innerHTML = "⏳ กำลังโหลดรายชื่อผู้มีสิทธิ์สุ่ม...";
+      callAppsScript("getAll", {}, function(res) {
+        if (res.success) {
+          // กรองเฉพาะ: พนักงานประจำ + สแกนแล้ว + ยังไม่เคยรับรางวัล (giftClaimed === false)
           checkedFulltimeWinners = res.data.filter(emp => 
             (emp.type === "พนักงานประจำ" || emp.type === "Fulltime") && 
             emp.checked === true && 
-            !emp.giftClaimed
+            emp.giftClaimed === false
           );
 
           if (checkedFulltimeWinners.length === 0) {
@@ -50,16 +291,18 @@
         ctx.arc(140, 140, 135, angle, angle + arcSize);
         ctx.lineTo(140, 140);
         ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#ffffff";
         ctx.stroke();
 
-        // พิมพ์ชื่อพนักงานในวงล้อ
+        // แสดงข้อความชื่อพนักงานบนวงล้อ
         ctx.save();
         ctx.translate(140, 140);
         ctx.rotate(angle + arcSize / 2);
         ctx.fillStyle = "white";
         ctx.font = "bold 11px Kanit";
         ctx.textAlign = "right";
-        ctx.fillText(checkedFulltimeWinners[i].name.substring(0, 12), 120, 4);
+        ctx.fillText(checkedFulltimeWinners[i].name.substring(0, 10), 125, 4);
         ctx.restore();
       }
     }
@@ -72,19 +315,26 @@
       const winnerIndex = Math.floor(Math.random() * numSegments);
       const winner = checkedFulltimeWinners[winnerIndex];
 
-      // คำนวณองศาให้ลูกศรด้านบน (270 องศา) ชี้ตรงกึ่งกลางของช่องผู้โชคดีเป๊ะๆ
+      // คำนวณองศาหมุนให้ตรงเป๊ะกับเข็มสีแดง (ทิศ 12 นาฬิกา)
       const segmentDegree = 360 / numSegments;
-      const centerOfSegmentDegree = (winnerIndex * segmentDegree) + (segmentDegree / 2);
-      const targetDegree = 270 - centerOfSegmentDegree;
+      const centerAngleOfWinner = (winnerIndex * segmentDegree) + (segmentDegree / 2);
       
-      // หมุนอย่างน้อย 5 รอบ (1800 deg)
-      currentRotation += 1800 + (targetDegree - (currentRotation % 360));
+      // แปลงมุม Canvas (0 deg อยู่ทิศ 3 นาฬิกา) ให้ตรงกับ Pointer ด้านบน (ทิศ 12 นาฬิกา = 270 deg)
+      const targetRotationDegree = (270 - centerAngleOfWinner + 360) % 360;
+      
+      // เพิ่มรอบการหมุน 5 รอบเต็ม (1800 องศา)
+      const currentMod = currentRotation % 360;
+      let additionalDegree = targetRotationDegree - currentMod;
+      if (additionalDegree <= 0) {
+        additionalDegree += 360;
+      }
+      currentRotation += 1800 + additionalDegree;
 
       const wheel = document.getElementById('wheel');
       wheel.style.transform = `rotate(${currentRotation}deg)`;
 
       setTimeout(() => {
-        // 1. แสดงผลผู้ชนะ
+        // 1. แสดงผลผู้โชคดีบนหน้าจอ
         const winnerDiv = document.getElementById('winnerResult');
         winnerDiv.innerHTML = `
           <h2 style="color:#d32f2f; margin:5px 0;">🎉 ยินดีด้วยครับ! 🎉</h2>
@@ -94,12 +344,21 @@
         `;
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
 
-        // 2. ส่งค่าไปบันทึกลง Google Sheets (Col I: Gift_Claimed)
+        // 2. เรียก API ไปบันทึกคำว่า Claimed ลง Google Sheets (คอลัมน์ I)
         callAppsScript("claimGift", { id: winner.id }, function(res) {
           document.getElementById('spinBtn').disabled = false;
-          // 3. โหลดรายชื่อใหม่ (คนชนะจะถูกตัดออกจากวงล้ออัตโนมัติ)
-          loadLuckyDrawCandidates();
+          if (res.success) {
+            // 3. โหลดรายชื่อผู้มีสิทธิ์สุ่มใหม่ (คนชนะจะถูกตัดสิทธิ์ออกทันที)
+            setTimeout(() => {
+              loadLuckyDrawCandidates();
+            }, 1500);
+          } else {
+            alert("เกิดข้อผิดพลาดในการบันทึก: " + res.message);
+          }
         });
 
       }, 4000);
     }
+  </script>
+</body>
+</html>
