@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in System - Aloha 2026</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: 'Kanit', sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 15px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+    #reader { width: 100%; border-radius: 8px; overflow: hidden; margin-top: 15px; }
+    .profile-img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-top: 10px; border: 3px solid #007bff; }
+    .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; }
+    .fulltime { background: #e3f2fd; color: #0d47a1; }
+    .outsource { background: #fff3e0; color: #e65100; }
+    .status-checked { color: green; font-weight: bold; font-size: 1.2em; }
+    .status-already { color: red; font-weight: bold; font-size: 1.2em; }
+    .btn-main { padding: 12px 24px; font-size: 1.1em; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+    .btn-start { padding: 14px 28px; font-size: 1.1em; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🌺 Check-In ALOHA 2026 🌺</h2>
+
+    <!-- แก้ URL นี้เป็น URL Web App ของคุณหลังจาก Deploy Code.gs แล้ว -->
+    <script>
+      const APPS_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+    </script>
+
+    <div id="reader"></div>
+    <div id="result" style="margin-top: 20px;">
+      <button class="btn-start" onclick="startCamera()">📷 กดเพื่อเริ่มสแกน</button>
+    </div>
+  </div>
+
+  <script>
+    let html5QrCode;
+
+    // ---------- JSONP helper: เรียก Apps Script โดยไม่ติด CORS ----------
+    function callAppsScript(action, params, onSuccess, onError) {
+      const cbName = "jsonpCallback_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+      const script = document.createElement("script");
+
+      window[cbName] = function (data) {
+        onSuccess(data);
+        delete window[cbName];
+        script.remove();
+      };
+
+      const timeoutId = setTimeout(function () {
+        if (window[cbName]) {
+          delete window[cbName];
+          script.remove();
+          onError("หมดเวลาเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่");
+        }
+      }, 15000);
+
+      const wrappedSuccess = window[cbName];
+      window[cbName] = function (data) {
+        clearTimeout(timeoutId);
+        wrappedSuccess(data);
+      };
+
+      let url = APPS_SCRIPT_URL + "?callback=" + cbName + "&action=" + encodeURIComponent(action);
+      for (const key in params) {
+        url += "&" + key + "=" + encodeURIComponent(params[key]);
+      }
+
+      script.src = url;
+      script.onerror = function () {
+        clearTimeout(timeoutId);
+        delete window[cbName];
+        onError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบ APPS_SCRIPT_URL หรือการ Deploy");
+      };
+      document.body.appendChild(script);
+    }
+
+    // ---------- กล้อง ----------
+    function startCamera() {
+      document.getElementById('reader').style.display = "block";
+      document.getElementById('result').innerHTML = "⏳ กำลังเปิดกล้อง...";
+
+      html5QrCode = new Html5Qrcode("reader");
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess
+      ).then(() => {
+        document.getElementById('result').innerHTML = "<p style='color:gray;'>🎯 ส่อง QR Code ให้อยู่ในกรอบ</p>";
+      }).catch(err => {
+        document.getElementById('result').innerHTML = `
+          <p class="status-already">❌ กรุณากด "อนุญาต (Allow)" ให้เว็บเข้าถึงกล้องถ่ายรูป</p>
+          <button class="btn-main" onclick="startCamera()">ลองเปิดกล้องอีกครั้ง</button>
+        `;
+      });
+    }
+
+    function onScanSuccess(decodedText) {
+      html5QrCode.stop().then(() => {
+        document.getElementById('reader').style.display = "none";
+        document.getElementById('result').innerHTML = "⏳ กำลังตรวจสอบข้อมูลพนักงาน...";
+
+        callAppsScript(
+          "checkin",
+          { id: decodedText },
+          showEmployeeData,
+          function (errMsg) {
+            document.getElementById('result').innerHTML = `
+              <p class="status-already">❌ ${errMsg}</p>
+              <button class="btn-main" onclick="resetToScan()">ลองใหม่ ➔</button>
+            `;
+          }
+        );
+      });
+    }
+
+    function showEmployeeData(res) {
+      const resultDiv = document.getElementById('result');
+
+      if (!res.success) {
+        resultDiv.innerHTML = `
+          <p class="status-already">❌ ${res.message}</p>
+          <button class="btn-main" onclick="resetToScan()">สแกนคนต่อไป ➔</button>
+        `;
+        return;
+      }
+
+      const emp = res.data;
+      const badgeClass = emp.type === "Outsource" ? "outsource" : "fulltime";
+      const statusText = res.alreadyChecked
+        ? `<p class="status-already">⚠️ เคยสแกนเข้างานไปแล้ว!</p>`
+        : `<p class="status-checked">✅ สแกนเข้างานสำเร็จ!</p>`;
+
+      const imgUrl = emp.image !== "" ? emp.image : "https://via.placeholder.com/150?text=No+Image";
+
+      resultDiv.innerHTML = `
+        ${statusText}
+        <img src="${imgUrl}" class="profile-img"><br><br>
+        <span class="badge ${badgeClass}">${emp.type}</span>
+        <h3>${emp.name}</h3>
+        <p><strong>รหัส:</strong> ${emp.id} | <strong>ส่วนงาน:</strong> ${emp.dept}</p>
+        <p style="font-size:0.8em; color:gray;">เวลาสแกน: ${res.checkInTime}</p>
+        <button class="btn-main" onclick="resetToScan()">สแกนคนต่อไป ➔</button>
+      `;
+    }
+
+    function resetToScan() {
+      document.getElementById('result').innerHTML = "";
+      startCamera();
+    }
+  </script>
+</body>
+</html>
