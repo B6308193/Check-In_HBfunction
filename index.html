@@ -92,7 +92,7 @@
       </div>
 
       <div class="form-group">
-        <label for="winnerCount">👥 จำนวนผู้โชคดี (ดึงตาม Qty ใน Sheet - แก้ไขได้):</label>
+        <label for="winnerCount">👥 จำนวนผู้โชคดี (คน):</label>
         <input type="number" id="winnerCount" class="form-control" value="1" min="1" max="100">
       </div>
 
@@ -110,7 +110,7 @@
     let allEmployees = [];
     let checkedFulltimeWinners = [];
     let currentRotation = 0;
-    let prizesList = []; // เก็บข้อมูลรายการรางวัลรวม qty
+    let prizesList = [];
 
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -377,10 +377,11 @@
 
       callAppsScript("getPrizes", {}, function(res) {
         if (res.success && res.data.length > 0) {
-          prizesList = res.data; // บันทึกลิสต์รางวัลไว้ในตัวแปร
+          prizesList = res.data;
           let html = "<option value=''>-- กรุณาเลือกของรางวัล --</option>";
           prizesList.forEach(prize => {
-            html += `<option value="${prize.name}">${prize.name} (จำนวนใน Sheet: ${prize.qty})</option>`;
+            // แสดงเฉพาะชื่อของรางวัลใน Dropdown
+            html += `<option value="${prize.name}">${prize.name}</option>`;
           });
           select.innerHTML = html;
         } else {
@@ -389,13 +390,14 @@
       });
     }
 
-    // เมื่อเปลี่ยนตัวเลือกรางวัล ให้ดึงค่า Qty จาก Sheet Prizes มาใส่ในช่องจำนวนผู้โชคดีทันที
+    // ฟังก์ชันอัปเดตช่องจำนวนผู้โชคดีให้อัตโนมัติตาม qty ของรางวัลที่เลือก
     function onPrizeChange() {
-      const selectedName = document.getElementById('prizeSelect').value;
+      const select = document.getElementById('prizeSelect');
+      const selectedName = select.value;
       const inputCount = document.getElementById('winnerCount');
-      
+
       const foundPrize = prizesList.find(p => p.name === selectedName);
-      if (foundPrize) {
+      if (foundPrize && foundPrize.qty > 0) {
         inputCount.value = foundPrize.qty;
       } else {
         inputCount.value = 1;
