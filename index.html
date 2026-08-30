@@ -54,6 +54,7 @@
       <button class="tab-btn" onclick="switchTab('batch-draw-tab', event)">🎁 สุ่มของรางวัล</button>
     </div>
 
+    <!-- TAB 1: SCANNER -->
     <div id="scan-tab" class="tab-content active">
       <div id="reader"></div>
       <div id="result" style="margin-top: 20px;">
@@ -61,6 +62,7 @@
       </div>
     </div>
 
+    <!-- TAB 2: MANUAL SEARCH -->
     <div id="search-tab" class="tab-content">
       <input type="text" id="searchInput" class="search-box" placeholder="พิมพ์ชื่อ หรือ รหัสพนักงาน..." onkeyup="filterUsers()">
       <div id="userList" class="user-list">
@@ -69,6 +71,7 @@
       <button class="btn-main" onclick="loadAllEmployees()" style="margin-top:10px;">🔄 ดึง/อัปเดตรายชื่อพนักงาน</button>
     </div>
 
+    <!-- TAB 3: LUCKY DRAW (WHEEL) -->
     <div id="draw-tab" class="tab-content">
       <p style="font-size: 0.9em; color: gray;">สุ่มรางวัลเฉพาะ "พนักงานประจำ" ที่สแกนเข้างานแล้ว</p>
       <div class="wheel-container">
@@ -79,17 +82,18 @@
       <div id="winnerResult" style="margin-top: 15px;"></div>
     </div>
 
+    <!-- TAB 4: BATCH DRAW -->
     <div id="batch-draw-tab" class="tab-content">
       <div class="form-group">
         <label for="prizeSelect">🎁 เลือกรายการของรางวัล:</label>
-        <select id="prizeSelect" class="form-control">
+        <select id="prizeSelect" class="form-control" onchange="onPrizeChange()">
           <option value="">-- กำลังโหลดรายการของรางวัล... --</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="winnerCount">👥 จำนวนผู้โชคดี (คน):</label>
-        <input type="number" id="winnerCount" class="form-control" value="1" min="1" max="50">
+        <label for="winnerCount">👥 จำนวนผู้โชคดี (ดึงตาม Qty ใน Sheet - แก้ไขได้):</label>
+        <input type="number" id="winnerCount" class="form-control" value="1" min="1" max="100">
       </div>
 
       <button id="batchSpinBtn" class="btn-start" onclick="executeBatchDraw()" style="background:#e91e63;">🎉 สุ่มของรางวัลทันที</button>
@@ -106,6 +110,7 @@
     let allEmployees = [];
     let checkedFulltimeWinners = [];
     let currentRotation = 0;
+    let prizesList = []; // เก็บข้อมูลรายการรางวัลรวม qty
 
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -372,17 +377,29 @@
 
       callAppsScript("getPrizes", {}, function(res) {
         if (res.success && res.data.length > 0) {
+          prizesList = res.data; // บันทึกลิสต์รางวัลไว้ในตัวแปร
           let html = "<option value=''>-- กรุณาเลือกของรางวัล --</option>";
-          res.data.forEach(prize => {
-            const status = prize.qty > 0 ? `(เหลือ ${prize.qty} ชิ้น)` : "(หมดแล้ว)";
-            const disabled = prize.qty <= 0 ? "disabled" : "";
-            html += `<option value="${prize.name}" ${disabled}>${prize.name} ${status}</option>`;
+          prizesList.forEach(prize => {
+            html += `<option value="${prize.name}">${prize.name} (จำนวนใน Sheet: ${prize.qty})</option>`;
           });
           select.innerHTML = html;
         } else {
           select.innerHTML = "<option value=''>⚠️ ไม่พบรายการของรางวัลใน Sheet 'Prizes'</option>";
         }
       });
+    }
+
+    // เมื่อเปลี่ยนตัวเลือกรางวัล ให้ดึงค่า Qty จาก Sheet Prizes มาใส่ในช่องจำนวนผู้โชคดีทันที
+    function onPrizeChange() {
+      const selectedName = document.getElementById('prizeSelect').value;
+      const inputCount = document.getElementById('winnerCount');
+      
+      const foundPrize = prizesList.find(p => p.name === selectedName);
+      if (foundPrize) {
+        inputCount.value = foundPrize.qty;
+      } else {
+        inputCount.value = 1;
+      }
     }
 
     function executeBatchDraw() {
@@ -439,9 +456,6 @@
 
         tableHtml += "</tbody></table>";
         container.innerHTML = tableHtml;
-
-        // อัปเดตรายการใน Dropdown
-        loadPrizeOptions();
       });
     }
   </script>
