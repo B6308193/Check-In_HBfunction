@@ -8,16 +8,14 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <style>
     body { font-family: 'Kanit', sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 450px; margin: 0 auto; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
     
-    /* Nav Tabs */
     .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-size: 0.95em; font-weight: bold; color: #666; cursor: pointer; }
+    .tab-btn { flex: 1; padding: 10px 2px; border: none; background: none; font-size: 0.82em; font-weight: bold; color: #666; cursor: pointer; }
     .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* UI Common */
     #reader { width: 100%; border-radius: 8px; overflow: hidden; margin-top: 15px; }
     .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-top: 10px; border: 3px solid #007bff; }
     .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; }
@@ -28,16 +26,21 @@
     .btn-main { padding: 12px 24px; font-size: 1.1em; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
     .btn-start { padding: 14px 28px; font-size: 1.1em; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
     
-    /* Search UI */
     .search-box { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
     .user-list { text-align: left; max-height: 250px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
     .user-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .user-item:last-child { border-bottom: none; }
 
-    /* Lucky Draw UI */
     .wheel-container { position: relative; width: 280px; height: 280px; margin: 0 auto; }
     #wheel { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #333; transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1); }
     .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 24px solid red; z-index: 10; }
+
+    .form-group { text-align: left; margin-bottom: 12px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+    .form-control { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    
+    .winner-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 0.88em; }
+    .winner-table th, .winner-table td { border: 1px solid #ddd; padding: 8px; }
+    .winner-table th { background-color: #f2f2f2; text-align: center; }
   </style>
 </head>
 <body>
@@ -47,7 +50,8 @@
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('scan-tab', event)">📷 สแกน</button>
       <button class="tab-btn" onclick="switchTab('search-tab', event)">🔍 ค้นหา</button>
-      <button class="tab-btn" onclick="switchTab('draw-tab', event)">🎁 สุ่มรางวัล</button>
+      <button class="tab-btn" onclick="switchTab('draw-tab', event)">🎰 สุ่มวงล้อ</button>
+      <button class="tab-btn" onclick="switchTab('batch-draw-tab', event)">🎁 สุ่มของรางวัล</button>
     </div>
 
     <div id="scan-tab" class="tab-content active">
@@ -75,6 +79,24 @@
       <div id="winnerResult" style="margin-top: 15px;"></div>
     </div>
 
+    <div id="batch-draw-tab" class="tab-content">
+      <div class="form-group">
+        <label for="prizeSelect">🎁 เลือกรายการของรางวัล:</label>
+        <select id="prizeSelect" class="form-control">
+          <option value="">-- กำลังโหลดรายการของรางวัล... --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="winnerCount">👥 จำนวนผู้โชคดี (คน):</label>
+        <input type="number" id="winnerCount" class="form-control" value="1" min="1" max="50">
+      </div>
+
+      <button id="batchSpinBtn" class="btn-start" onclick="executeBatchDraw()" style="background:#e91e63;">🎉 สุ่มของรางวัลทันที</button>
+
+      <div id="batchResultContainer" style="margin-top: 20px;"></div>
+    </div>
+
   </div>
 
   <script>
@@ -85,7 +107,6 @@
     let checkedFulltimeWinners = [];
     let currentRotation = 0;
 
-    // ---------- Tab Switcher ----------
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -101,9 +122,11 @@
       if (tabId === 'draw-tab') {
         loadLuckyDrawCandidates();
       }
+      if (tabId === 'batch-draw-tab') {
+        loadPrizeOptions();
+      }
     }
 
-    // ---------- JSONP Helper ----------
     function callAppsScript(action, params, onSuccess, onError) {
       const cbName = "jsonpCallback_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
       const script = document.createElement("script");
@@ -120,7 +143,7 @@
           script.remove();
           if (onError) onError("หมดเวลาเชื่อมต่อเซิร์ฟเวอร์");
         }
-      }, 15000);
+      }, 20000);
 
       let url = APPS_SCRIPT_URL + "?callback=" + cbName + "&action=" + encodeURIComponent(action);
       for (const key in params) {
@@ -131,7 +154,7 @@
       document.body.appendChild(script);
     }
 
-    // ---------- TAB 1: CAMERA SCAN ----------
+    // TAB 1 SCAN
     function startCamera() {
       document.getElementById('reader').style.display = "block";
       document.getElementById('result').innerHTML = "⏳ กำลังเปิดกล้อง...";
@@ -187,7 +210,7 @@
       startCamera();
     }
 
-    // ---------- TAB 2: MANUAL SEARCH ----------
+    // TAB 2 SEARCH
     function loadAllEmployees() {
       document.getElementById('userList').innerHTML = "<p style='text-align:center;'>⏳ กำลังโหลดข้อมูล...</p>";
       callAppsScript("getAll", {}, function(res) {
@@ -235,7 +258,7 @@
       }
     }
 
-    // ---------- TAB 3: LUCKY DRAW ----------
+    // TAB 3 WHEEL DRAW
     function loadLuckyDrawCandidates() {
       document.getElementById('winnerResult').innerHTML = "⏳ กำลังโหลดรายชื่อผู้มีสิทธิ์สุ่ม...";
       callAppsScript("getAll", {}, function(res) {
@@ -310,4 +333,117 @@
       const winner = checkedFulltimeWinners[winnerIndex];
 
       const segmentDegree = 360 / numSegments;
-      const centerAngleOfWinner
+      const centerAngleOfWinner = (winnerIndex * segmentDegree) + (segmentDegree / 2);
+      const targetRotationDegree = (270 - centerAngleOfWinner + 360) % 360;
+      
+      const currentMod = currentRotation % 360;
+      let additionalDegree = targetRotationDegree - currentMod;
+      if (additionalDegree <= 0) additionalDegree += 360;
+      currentRotation += 1800 + additionalDegree;
+
+      const wheel = document.getElementById('wheel');
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+      setTimeout(() => {
+        const winnerDiv = document.getElementById('winnerResult');
+        winnerDiv.innerHTML = `
+          <h2 style="color:#d32f2f; margin:5px 0;">🎉 ยินดีด้วยครับ! 🎉</h2>
+          <h3 style="margin:5px 0;">${winner.name} (${winner.id})</h3>
+          <p style="margin:5px 0; color:gray;">${winner.dept}</p>
+          <p style="color:blue; font-size:0.85em;">⏳ กำลังบันทึกผลลง Google Sheets...</p>
+        `;
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+
+        callAppsScript("claimGift", { id: winner.id }, function(res) {
+          document.getElementById('spinBtn').disabled = false;
+          if (res.success) {
+            setTimeout(() => { loadLuckyDrawCandidates(); }, 1500);
+          } else {
+            alert("เกิดข้อผิดพลาดในการบันทึก: " + res.message);
+          }
+        });
+      }, 4000);
+    }
+
+    // TAB 4 BATCH DRAW
+    function loadPrizeOptions() {
+      const select = document.getElementById('prizeSelect');
+      select.innerHTML = "<option value=''>⏳ กำลังโหลดรายการของรางวัล...</option>";
+
+      callAppsScript("getPrizes", {}, function(res) {
+        if (res.success && res.data.length > 0) {
+          let html = "<option value=''>-- กรุณาเลือกของรางวัล --</option>";
+          res.data.forEach(prize => {
+            const status = prize.qty > 0 ? `(เหลือ ${prize.qty} ชิ้น)` : "(หมดแล้ว)";
+            const disabled = prize.qty <= 0 ? "disabled" : "";
+            html += `<option value="${prize.name}" ${disabled}>${prize.name} ${status}</option>`;
+          });
+          select.innerHTML = html;
+        } else {
+          select.innerHTML = "<option value=''>⚠️ ไม่พบรายการของรางวัลใน Sheet 'Prizes'</option>";
+        }
+      });
+    }
+
+    function executeBatchDraw() {
+      const prizeName = document.getElementById('prizeSelect').value;
+      const count = document.getElementById('winnerCount').value;
+      const container = document.getElementById('batchResultContainer');
+
+      if (!prizeName) {
+        alert("กรุณาเลือกรายการของรางวัลก่อนครับ");
+        return;
+      }
+      if (!count || count <= 0) {
+        alert("กรุณาระบุจำนวนผู้โชคดีอย่างน้อย 1 คน");
+        return;
+      }
+
+      document.getElementById('batchSpinBtn').disabled = true;
+      container.innerHTML = "<p style='color:blue; font-weight:bold;'>⏳ กำลังสุ่มผู้โชคดีและบันทึกข้อมูล...</p>";
+
+      callAppsScript("drawMultiPrizes", { prizeName: prizeName, count: count }, function(res) {
+        document.getElementById('batchSpinBtn').disabled = false;
+
+        if (!res.success) {
+          container.innerHTML = `<p style="color:red; font-weight:bold;">❌ ${res.message}</p>`;
+          return;
+        }
+
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+
+        let tableHtml = `
+          <h3 style="color:#28a745; margin-bottom:5px;">🎉 รายชื่อผู้ได้รับ: ${res.prizeName} 🎉</h3>
+          <table class="winner-table">
+            <thead>
+              <tr>
+                <th style="width:10%;">#</th>
+                <th style="width:25%;">รหัส</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th style="width:30%;">ส่วนงาน</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        res.winners.forEach((w, index) => {
+          tableHtml += `
+            <tr>
+              <td style="text-align:center;">${index + 1}</td>
+              <td style="text-align:center; font-weight:bold;">${w.id}</td>
+              <td>${w.name}</td>
+              <td>${w.dept}</td>
+            </tr>
+          `;
+        });
+
+        tableHtml += "</tbody></table>";
+        container.innerHTML = tableHtml;
+
+        // อัปเดตรายการใน Dropdown
+        loadPrizeOptions();
+      });
+    }
+  </script>
+</body>
+</html>
