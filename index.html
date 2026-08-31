@@ -10,8 +10,8 @@
     body { font-family: 'Kanit', sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 15px; }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
     
-    .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 10px 2px; border: none; background: none; font-size: 0.82em; font-weight: bold; color: #666; cursor: pointer; }
+    .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { flex: 1; min-width: 70px; padding: 10px 2px; border: none; background: none; font-size: 0.8em; font-weight: bold; color: #666; cursor: pointer; }
     .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -41,6 +41,31 @@
     .winner-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 0.88em; }
     .winner-table th, .winner-table td { border: 1px solid #ddd; padding: 8px; }
     .winner-table th { background-color: #f2f2f2; text-align: center; }
+
+    /* ===== SUMMARY TAB STYLES ===== */
+    .stats-row { display: flex; gap: 8px; margin-bottom: 15px; }
+    .stat-box { flex: 1; padding: 12px 4px; border-radius: 10px; }
+    .stat-box .num { font-size: 1.6em; font-weight: bold; display: block; line-height: 1.1; }
+    .stat-box .label { font-size: 0.75em; color: #555; }
+    .stat-total { background: #e9ecef; }
+    .stat-total .num { color: #343a40; }
+    .stat-checked { background: #d4edda; }
+    .stat-checked .num { color: #1e7e34; }
+    .stat-notchecked { background: #f8d7da; }
+    .stat-notchecked .num { color: #c82333; }
+
+    .filter-row { display: flex; gap: 6px; margin-bottom: 10px; }
+    .filter-btn { flex: 1; padding: 8px 4px; font-size: 0.8em; border: 1px solid #ccc; background: white; border-radius: 6px; cursor: pointer; }
+    .filter-btn.active { background: #007bff; color: white; border-color: #007bff; }
+
+    .summary-table-wrap { max-height: 350px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; margin-top: 5px; }
+    .summary-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82em; }
+    .summary-table th { position: sticky; top: 0; background: #f2f2f2; padding: 8px 6px; border-bottom: 2px solid #ddd; }
+    .summary-table td { padding: 7px 6px; border-bottom: 1px solid #eee; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.78em; font-weight: bold; white-space: nowrap; }
+    .pill-checked { background: #d4edda; color: #1e7e34; }
+    .pill-notchecked { background: #f8d7da; color: #c82333; }
   </style>
 </head>
 <body>
@@ -52,6 +77,7 @@
       <button class="tab-btn" onclick="switchTab('search-tab', event)">🔍 ค้นหา</button>
       <button class="tab-btn" onclick="switchTab('draw-tab', event)">🎰 สุ่มวงล้อ</button>
       <button class="tab-btn" onclick="switchTab('batch-draw-tab', event)">🎁 สุ่มของรางวัล</button>
+      <button class="tab-btn" onclick="switchTab('summary-tab', event)">📊 สรุป</button>
     </div>
 
     <!-- TAB 1: SCANNER -->
@@ -101,6 +127,51 @@
       <div id="batchResultContainer" style="margin-top: 20px;"></div>
     </div>
 
+    <!-- TAB 5: SUMMARY -->
+    <div id="summary-tab" class="tab-content">
+      <div class="stats-row">
+        <div class="stat-box stat-total">
+          <span class="num" id="statTotal">-</span>
+          <span class="label">ทั้งหมด</span>
+        </div>
+        <div class="stat-box stat-checked">
+          <span class="num" id="statChecked">-</span>
+          <span class="label">เช็คอินแล้ว</span>
+        </div>
+        <div class="stat-box stat-notchecked">
+          <span class="num" id="statNotChecked">-</span>
+          <span class="label">ยังไม่เช็คอิน</span>
+        </div>
+      </div>
+
+      <input type="text" id="summarySearchInput" class="search-box" placeholder="ค้นหาด้วยรหัสพนักงาน หรือ ชื่อ..." onkeyup="renderSummaryTable()">
+
+      <div class="filter-row">
+        <button class="filter-btn active" id="filterAllBtn" onclick="setSummaryFilter('all')">ทั้งหมด</button>
+        <button class="filter-btn" id="filterCheckedBtn" onclick="setSummaryFilter('checked')">เช็คอินแล้ว</button>
+        <button class="filter-btn" id="filterNotCheckedBtn" onclick="setSummaryFilter('notchecked')">ยังไม่เช็คอิน</button>
+      </div>
+
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>รหัส</th>
+              <th>ชื่อ-นามสกุล</th>
+              <th>ส่วนงาน</th>
+              <th>สถานะ</th>
+              <th>เวลา</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTableBody">
+            <tr><td colspan="5" style="text-align:center; color:gray; padding:15px;">⏳ กำลังโหลดข้อมูล...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button class="btn-main" onclick="loadSummaryData()" style="margin-top:10px;">🔄 รีเฟรชข้อมูลสรุป</button>
+    </div>
+
   </div>
 
   <script>
@@ -111,6 +182,10 @@
     let checkedFulltimeWinners = [];
     let currentRotation = 0;
     let prizesList = [];
+
+    // ===== Summary tab state =====
+    let summaryEmployees = [];
+    let summaryFilter = 'all'; // 'all' | 'checked' | 'notchecked'
 
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -129,6 +204,9 @@
       }
       if (tabId === 'batch-draw-tab') {
         loadPrizeOptions();
+      }
+      if (tabId === 'summary-tab') {
+        loadSummaryData();
       }
     }
 
@@ -459,6 +537,86 @@
         tableHtml += "</tbody></table>";
         container.innerHTML = tableHtml;
       });
+    }
+
+    // ===== TAB 5: SUMMARY =====
+    function loadSummaryData() {
+      document.getElementById('summaryTableBody').innerHTML =
+        "<tr><td colspan='5' style='text-align:center; color:gray; padding:15px;'>⏳ กำลังโหลดข้อมูล...</td></tr>";
+
+      callAppsScript("getAll", {}, function(res) {
+        if (res.success) {
+          summaryEmployees = res.data;
+          updateSummaryStats();
+          renderSummaryTable();
+        } else {
+          document.getElementById('summaryTableBody').innerHTML =
+            "<tr><td colspan='5' style='text-align:center; color:red; padding:15px;'>❌ โหลดข้อมูลไม่สำเร็จ</td></tr>";
+        }
+      }, function(err) {
+        document.getElementById('summaryTableBody').innerHTML =
+          `<tr><td colspan='5' style='text-align:center; color:red; padding:15px;'>❌ ${err}</td></tr>`;
+      });
+    }
+
+    function updateSummaryStats() {
+      const total = summaryEmployees.length;
+      const checked = summaryEmployees.filter(e => e.checked).length;
+      const notChecked = total - checked;
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statChecked').textContent = checked;
+      document.getElementById('statNotChecked').textContent = notChecked;
+    }
+
+    function setSummaryFilter(filterType) {
+      summaryFilter = filterType;
+
+      document.getElementById('filterAllBtn').classList.toggle('active', filterType === 'all');
+      document.getElementById('filterCheckedBtn').classList.toggle('active', filterType === 'checked');
+      document.getElementById('filterNotCheckedBtn').classList.toggle('active', filterType === 'notchecked');
+
+      renderSummaryTable();
+    }
+
+    function renderSummaryTable() {
+      const keyword = document.getElementById('summarySearchInput').value.trim().toLowerCase();
+      const tbody = document.getElementById('summaryTableBody');
+
+      let filtered = summaryEmployees.filter(emp => {
+        // กรองตามสถานะที่เลือก (ทั้งหมด / เช็คอินแล้ว / ยังไม่เช็คอิน)
+        if (summaryFilter === 'checked' && !emp.checked) return false;
+        if (summaryFilter === 'notchecked' && emp.checked) return false;
+
+        // กรองตามคำค้นหา (รหัส หรือ ชื่อ)
+        if (keyword === "") return true;
+        return emp.id.toLowerCase().includes(keyword) || emp.name.toLowerCase().includes(keyword);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:gray; padding:15px;'>ไม่พบข้อมูลที่ค้นหา</td></tr>";
+        return;
+      }
+
+      let html = "";
+      filtered.forEach(emp => {
+        const statusPill = emp.checked
+          ? `<span class="pill pill-checked">✅ เช็คอินแล้ว</span>`
+          : `<span class="pill pill-notchecked">⏳ ยังไม่เช็คอิน</span>`;
+        const timeText = emp.checkInTime ? emp.checkInTime : "-";
+
+        html += `
+          <tr>
+            <td style="font-weight:bold;">${emp.id}</td>
+            <td>${emp.name}</td>
+            <td>${emp.dept}</td>
+            <td>${statusPill}</td>
+            <td style="font-size:0.85em; color:#555;">${timeText}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
     }
   </script>
 </body>
