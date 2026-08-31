@@ -8,12 +8,88 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <style>
     body { font-family: 'Kanit', sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
-    
-    .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab-btn { flex: 1; min-width: 70px; padding: 10px 2px; border: none; background: none; font-size: 0.8em; font-weight: bold; color: #666; cursor: pointer; }
-    .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
-    .tab-content { display: none; }
+    .card { position: relative; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; overflow: hidden; }
+
+    /* ===== HAMBURGER MENU BUTTON (มุมบนซ้าย) ===== */
+    .hamburger-btn {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 40px;
+      height: 40px;
+      z-index: 60;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: #333;
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    /* ===== SIDE DRAWER MENU ===== */
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 70;
+    }
+    .menu-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .drawer-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 240px;
+      max-width: 78%;
+      background: #ffffff;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+      transform: translateX(-100%);
+      transition: transform 0.28s ease;
+      z-index: 80;
+      text-align: left;
+      padding: 20px 0;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .drawer-menu.open { transform: translateX(0); }
+    .drawer-title { font-weight: bold; font-size: 1.05em; padding: 0 18px 14px 18px; border-bottom: 1px solid #eee; margin-bottom: 8px; }
+    .drawer-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px 18px;
+      border: none;
+      background: none;
+      font-size: 0.95em;
+      font-weight: bold;
+      color: #555;
+      cursor: pointer;
+      text-align: left;
+    }
+    .drawer-item.active { color: #007bff; background: #eaf3ff; border-right: 4px solid #007bff; }
+    .drawer-item:active { background: #f0f0f0; }
+
+    .tab-content { display: none; padding-top: 34px; }
     .tab-content.active { display: block; }
 
     #reader { width: 100%; border-radius: 8px; overflow: hidden; margin-top: 15px; }
@@ -69,16 +145,26 @@
   </style>
 </head>
 <body>
+  <!-- ปุ่มแฮมเบอร์เกอร์มุมบนซ้าย -->
+  <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="เมนู">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- ฉากหลังคลิกเพื่อปิดเมนู -->
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+
+  <!-- เมนูแบบเลื่อนออกด้านซ้าย -->
+  <nav class="drawer-menu" id="drawerMenu">
+    <div class="drawer-title">🌺 เมนู</div>
+    <button class="drawer-item active" data-tab="scan-tab" onclick="switchTab('scan-tab', event)">📷 สแกน</button>
+    <button class="drawer-item" data-tab="search-tab" onclick="switchTab('search-tab', event)">🔍 ค้นหา</button>
+    <button class="drawer-item" data-tab="draw-tab" onclick="switchTab('draw-tab', event)">🎰 สุ่มวงล้อ</button>
+    <button class="drawer-item" data-tab="batch-draw-tab" onclick="switchTab('batch-draw-tab', event)">🎁 สุ่มของรางวัล</button>
+    <button class="drawer-item" data-tab="summary-tab" onclick="switchTab('summary-tab', event)">📊 สรุป</button>
+  </nav>
+
   <div class="card">
     <h2>🌺 ALOHA HB Function 2026 🌺</h2>
-
-    <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('scan-tab', event)">📷 สแกน</button>
-      <button class="tab-btn" onclick="switchTab('search-tab', event)">🔍 ค้นหา</button>
-      <button class="tab-btn" onclick="switchTab('draw-tab', event)">🎰 สุ่มวงล้อ</button>
-      <button class="tab-btn" onclick="switchTab('batch-draw-tab', event)">🎁 สุ่มของรางวัล</button>
-      <button class="tab-btn" onclick="switchTab('summary-tab', event)">📊 สรุป</button>
-    </div>
 
     <!-- TAB 1: SCANNER -->
     <div id="scan-tab" class="tab-content active">
@@ -189,11 +275,14 @@
 
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
       
       document.getElementById(tabId).classList.add('active');
       if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add('active');
+      } else {
+        const btn = document.querySelector('.drawer-item[data-tab="' + tabId + '"]');
+        if (btn) btn.classList.add('active');
       }
 
       if (tabId !== 'scan-tab' && html5QrCode && html5QrCode.isScanning) {
@@ -208,6 +297,30 @@
       if (tabId === 'summary-tab') {
         loadSummaryData();
       }
+
+      closeMenu();
+    }
+
+    // ===== HAMBURGER MENU CONTROL =====
+    function toggleMenu() {
+      const isOpen = document.getElementById('drawerMenu').classList.contains('open');
+      if (isOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    }
+
+    function openMenu() {
+      document.getElementById('drawerMenu').classList.add('open');
+      document.getElementById('menuOverlay').classList.add('open');
+      document.getElementById('hamburgerBtn').classList.add('open');
+    }
+
+    function closeMenu() {
+      document.getElementById('drawerMenu').classList.remove('open');
+      document.getElementById('menuOverlay').classList.remove('open');
+      document.getElementById('hamburgerBtn').classList.remove('open');
     }
 
     function callAppsScript(action, params, onSuccess, onError) {
