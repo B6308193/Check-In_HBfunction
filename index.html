@@ -7,38 +7,68 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <style>
-    body { font-family: 'Kanit', sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
-    
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+      margin: 0;
+      /* จอเล็ก: padding แคบ / จอใหญ่: padding กว้างขึ้นตามสัดส่วน */
+      padding: clamp(15px, 4vw, 40px);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      /* ขยายตามความกว้างจอจริง แต่ไม่เกิน 640px แม้จอจะกว้างแค่ไหนก็ตาม */
+      width: 100%;
+      max-width: 640px;
+      padding: clamp(20px, 4vw, 40px);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin: 0 auto;
+    }
+
+    .card h2 { font-size: clamp(1.3em, 3.2vw, 2em); margin: 0 0 10px; }
+
     .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 10px 2px; border: none; background: none; font-size: 0.82em; font-weight: bold; color: #666; cursor: pointer; }
+    .tab-btn { flex: 1; padding: clamp(8px, 1.5vw, 14px) 2px; border: none; background: none; font-size: clamp(0.82em, 1.6vw, 1em); font-weight: bold; color: #666; cursor: pointer; }
     .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    #reader { width: 100%; border-radius: 8px; overflow: hidden; margin-top: 15px; }
-    .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-top: 10px; border: 3px solid #007bff; }
+    #reader { width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; border-radius: 8px; overflow: hidden; margin-top: 15px; }
+    .profile-img { width: clamp(120px, 20vw, 160px); height: clamp(120px, 20vw, 160px); border-radius: 50%; object-fit: cover; margin-top: 10px; border: 3px solid #007bff; }
     .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; }
     .fulltime { background: #e3f2fd; color: #0d47a1; }
     .outsource { background: #fff3e0; color: #e65100; }
-    .status-checked { color: green; font-weight: bold; font-size: 1.2em; }
-    .status-already { color: red; font-weight: bold; font-size: 1.2em; }
-    .btn-main { padding: 12px 24px; font-size: 1.1em; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-    .btn-start { padding: 14px 28px; font-size: 1.1em; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
-    
-    .search-box { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
-    .user-list { text-align: left; max-height: 250px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
+    .status-checked { color: green; font-weight: bold; font-size: clamp(1.1em, 2.2vw, 1.4em); }
+    .status-already { color: red; font-weight: bold; font-size: clamp(1.1em, 2.2vw, 1.4em); }
+    .btn-main { padding: clamp(12px, 2vw, 16px) 24px; font-size: clamp(1em, 1.8vw, 1.15em); background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+    .btn-start { padding: clamp(14px, 2.2vw, 18px) 28px; font-size: clamp(1em, 1.8vw, 1.15em); background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+
+    .search-box { width: 100%; padding: clamp(10px, 1.6vw, 14px); font-size: clamp(1em, 1.6vw, 1.1em); border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px; }
+    .user-list { text-align: left; max-height: min(50vh, 320px); overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
     .user-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
 
-    .wheel-container { position: relative; width: 280px; height: 280px; margin: 0 auto; }
+    .wheel-container {
+      position: relative;
+      width: clamp(240px, 45vw, 340px);
+      height: clamp(240px, 45vw, 340px);
+      margin: 0 auto;
+    }
     #wheel { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #333; transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1); }
     .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 24px solid red; z-index: 10; }
 
     .form-group { text-align: left; margin-bottom: 12px; }
-    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
-    .form-control { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    
-    .winner-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 0.88em; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: clamp(0.9em, 1.5vw, 1em); }
+    .form-control { width: 100%; padding: clamp(10px, 1.6vw, 14px); font-size: clamp(1em, 1.6vw, 1.1em); border: 1px solid #ccc; border-radius: 6px; }
+
+    .winner-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: clamp(0.85em, 1.5vw, 1em); }
     .winner-table th, .winner-table td { border: 1px solid #ddd; padding: 8px; }
     .winner-table th { background-color: #f2f2f2; text-align: center; }
   </style>
@@ -115,7 +145,7 @@
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      
+
       document.getElementById(tabId).classList.add('active');
       if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add('active');
@@ -242,7 +272,7 @@
               <strong>${emp.name}</strong> (${emp.id})<br>
               <small style="color:gray;">${emp.dept} | ${emp.type}</small>
             </div>
-            <button style="padding:5px 10px; color:white; border:none; border-radius:4px; ${btnStyle}" 
+            <button style="padding:5px 10px; color:white; border:none; border-radius:4px; ${btnStyle}"
               ${emp.checked ? 'disabled' : ''} onclick="manualCheckin('${emp.id}')">${btnText}</button>
           </div>
         `;
@@ -268,9 +298,9 @@
       document.getElementById('winnerResult').innerHTML = "⏳ กำลังโหลดรายชื่อผู้มีสิทธิ์สุ่ม...";
       callAppsScript("getAll", {}, function(res) {
         if (res.success) {
-          checkedFulltimeWinners = res.data.filter(emp => 
-            (emp.type === "พนักงานประจำ" || emp.type === "Fulltime") && 
-            emp.checked === true && 
+          checkedFulltimeWinners = res.data.filter(emp =>
+            (emp.type === "พนักงานประจำ" || emp.type === "Fulltime") &&
+            emp.checked === true &&
             emp.giftClaimed === false
           );
 
@@ -340,7 +370,7 @@
       const segmentDegree = 360 / numSegments;
       const centerAngleOfWinner = (winnerIndex * segmentDegree) + (segmentDegree / 2);
       const targetRotationDegree = (270 - centerAngleOfWinner + 360) % 360;
-      
+
       const currentMod = currentRotation % 360;
       let additionalDegree = targetRotationDegree - currentMod;
       if (additionalDegree <= 0) additionalDegree += 360;
