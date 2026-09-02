@@ -277,7 +277,7 @@
     <div id="search-tab" class="tab-content">
       <input type="text" id="searchInput" class="search-box" placeholder="พิมพ์ชื่อ หรือ รหัสพนักงาน..." onkeyup="filterUsers()">
       <div id="userList" class="user-list">
-        <p style="text-align:center; color:gray;">กดปุ่มด้านล่างเพื่อโหลดข้อมูลพนักงาน</p>
+        <p style="text-align:center; color:gray;">⏳ กำลังโหลดข้อมูลพนักงาน...</p>
       </div>
       <button class="btn-main" onclick="loadAllEmployees()" style="margin-top:10px;">🔄 ดึง/อัปเดตรายชื่อพนักงาน</button>
     </div>
@@ -389,6 +389,9 @@
 
       if (tabId !== 'scan-tab' && html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop();
+      }
+      if (tabId === 'search-tab') {
+        loadAllEmployees();
       }
       if (tabId === 'draw-tab') {
         loadLuckyDrawCandidates();
