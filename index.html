@@ -210,6 +210,51 @@
     .pill-checked { background: #d4edda; color: #1e7e34; }
     .pill-notchecked { background: #f8d7da; color: #c82333; }
 
+    /* ===== POPUP MODAL: ประกาศผู้โชคดี ===== */
+    .winner-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .winner-modal-overlay.open { display: flex; }
+    .winner-modal-box {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 30px 24px 24px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: winnerPopIn 0.35s ease;
+    }
+    @keyframes winnerPopIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      70% { transform: scale(1.04); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .winner-modal-emoji { font-size: 2.4em; margin-bottom: 4px; }
+    .winner-modal-title { color: #d32f2f; font-size: 1.3em; font-weight: 800; margin: 4px 0 12px 0; }
+    .winner-modal-name { font-size: 1.15em; font-weight: bold; margin: 6px 0 2px 0; }
+    .winner-modal-dept { color: gray; font-size: 0.95em; margin-bottom: 6px; }
+    .winner-modal-status { font-size: 0.85em; color: #007bff; min-height: 1.2em; margin-bottom: 16px; }
+    .winner-modal-close-btn {
+      padding: 12px 20px;
+      font-size: 1em;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+    .winner-modal-close-btn:hover { background: #218838; }
+
     /* ==========================================================
        RESPONSIVE: จอแท็บเล็ต / โน้ตบุ๊ก / เดสก์ท็อป (>= 640px)
        ทำให้การ์ดกว้างขึ้น ไม่ใช่แคบๆ ลอยกลางจอเหมือนบนมือถือ
@@ -261,6 +306,18 @@
     <button class="drawer-item" data-tab="batch-draw-tab" onclick="switchTab('batch-draw-tab', event)">🎁 สุ่มของรางวัล</button>
     <button class="drawer-item" data-tab="summary-tab" onclick="switchTab('summary-tab', event)">📊 สรุป</button>
   </nav>
+
+  <!-- POPUP MODAL: ประกาศผู้โชคดีหลังหมุนวงล้อ -->
+  <div class="winner-modal-overlay" id="winnerModalOverlay">
+    <div class="winner-modal-box">
+      <div class="winner-modal-emoji">🎉🎊🎉</div>
+      <div class="winner-modal-title">ยินดีด้วยครับ!</div>
+      <div class="winner-modal-name" id="winnerModalName">-</div>
+      <div class="winner-modal-dept" id="winnerModalDept">-</div>
+      <div class="winner-modal-status" id="winnerModalStatus">⏳ กำลังบันทึกผลลง Google Sheets...</div>
+      <button class="winner-modal-close-btn" onclick="closeWinnerModal()">ปิด</button>
+    </div>
+  </div>
 
   <div class="card">
     <h2>🌺 ALOHA HB Function 2026 🌺</h2>
@@ -661,24 +718,32 @@
       wheel.style.transform = `rotate(${currentRotation}deg)`;
 
       setTimeout(() => {
-        const winnerDiv = document.getElementById('winnerResult');
-        winnerDiv.innerHTML = `
-          <h2 style="color:#d32f2f; margin:5px 0;">🎉 ยินดีด้วยครับ! 🎉</h2>
-          <h3 style="margin:5px 0;">${winner.name} (${winner.id})</h3>
-          <p style="margin:5px 0; color:gray;">${winner.dept}</p>
-          <p style="color:blue; font-size:0.85em;">⏳ กำลังบันทึกผลลง Google Sheets...</p>
-        `;
+        showWinnerModal(winner);
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
 
         callAppsScript("claimGift", { id: winner.id }, function(res) {
           document.getElementById('spinBtn').disabled = false;
           if (res.success) {
-            setTimeout(() => { loadLuckyDrawCandidates(); }, 1500);
+            document.getElementById('winnerModalStatus').textContent = "✅ บันทึกผลเรียบร้อยแล้ว";
           } else {
-            alert("เกิดข้อผิดพลาดในการบันทึก: " + res.message);
+            document.getElementById('winnerModalStatus').textContent = "❌ บันทึกผิดพลาด: " + res.message;
           }
         });
       }, 4000);
+    }
+
+    // ===== POPUP MODAL ประกาศผู้โชคดี =====
+    function showWinnerModal(winner) {
+      document.getElementById('winnerModalName').textContent = winner.name + " (" + winner.id + ")";
+      document.getElementById('winnerModalDept').textContent = winner.dept;
+      document.getElementById('winnerModalStatus').textContent = "⏳ กำลังบันทึกผลลง Google Sheets...";
+      document.getElementById('winnerModalOverlay').classList.add('open');
+    }
+
+    function closeWinnerModal() {
+      document.getElementById('winnerModalOverlay').classList.remove('open');
+      // รีเฟรชจำนวนผู้มีสิทธิ์ / วงล้อ หลังปิด popup
+      loadLuckyDrawCandidates();
     }
 
     // TAB 4 BATCH DRAW
