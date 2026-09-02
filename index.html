@@ -146,6 +146,26 @@
     .user-list { text-align: left; max-height: 250px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
     .user-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+    /* ===== กล่องตัวเลขจำนวนผู้มีสิทธิ์ลุ้นรางวัล (แท็บสุ่มวงล้อ) ===== */
+    .eligible-count-box {
+      background: #fff3e0;
+      border-radius: 14px;
+      padding: 16px 10px;
+      margin-bottom: 15px;
+    }
+    .eligible-count-box .eligible-num {
+      display: block;
+      font-size: 3em;
+      font-weight: 800;
+      color: #e65100;
+      line-height: 1.1;
+    }
+    .eligible-count-box .eligible-label {
+      font-size: 0.85em;
+      color: #555;
+      font-weight: bold;
+    }
+
     /* ===== วงล้อ: สเกลตามความกว้างของการ์ดจริง ไม่ตรึงพิกเซล ===== */
     .wheel-container {
       position: relative;
@@ -264,7 +284,10 @@
 
     <!-- TAB 3: LUCKY DRAW (WHEEL) -->
     <div id="draw-tab" class="tab-content">
-      <p style="font-size: 0.9em; color: gray;">สุ่มรางวัลเฉพาะ "พนักงานประจำ" ที่สแกนเข้างานแล้ว</p>
+      <div class="eligible-count-box">
+        <span class="eligible-num" id="eligibleCount">-</span>
+        <span class="eligible-label">คนมีสิทธิ์ลุ้นรางวัล</span>
+      </div>
       <div class="wheel-container">
         <div class="pointer"></div>
         <canvas id="wheel" width="280" height="280"></canvas>
@@ -535,20 +558,35 @@
 
     // TAB 3 WHEEL DRAW
     function loadLuckyDrawCandidates() {
+      document.getElementById('eligibleCount').textContent = "-";
       document.getElementById('winnerResult').innerHTML = "⏳ กำลังโหลดรายชื่อผู้มีสิทธิ์สุ่ม...";
       callAppsScript("getAll", {}, function(res) {
         if (res.success) {
-          checkedFulltimeWinners = res.data.filter(emp => 
+          const eligible = res.data.filter(emp => 
             (emp.type === "พนักงานประจำ" || emp.type === "Fulltime") && 
             emp.checked === true && 
             emp.giftClaimed === false
           );
 
+          // กันรายชื่อซ้ำ: ถ้ารหัสพนักงานเดียวกันโผล่มากกว่า 1 แถวในชีท
+          // (ข้อมูลผิดพลาด/พิมพ์ซ้ำ) ให้เหลือรหัสละ 1 คนเท่านั้น
+          // เพื่อไม่ให้คนคนเดียวมีสิทธิ์ลุ้นมากกว่า 1 ครั้ง
+          const seenIds = new Set();
+          checkedFulltimeWinners = [];
+          eligible.forEach(emp => {
+            if (!seenIds.has(emp.id)) {
+              seenIds.add(emp.id);
+              checkedFulltimeWinners.push(emp);
+            }
+          });
+
+          document.getElementById('eligibleCount').textContent = checkedFulltimeWinners.length;
+
           if (checkedFulltimeWinners.length === 0) {
             document.getElementById('winnerResult').innerHTML = "<p style='color:red;'>⚠️ ไม่มีพนักงานประจำที่สแกนแล้ว หรือได้รางวัลครบทุกคนแล้ว</p>";
             drawEmptyWheel();
           } else {
-            document.getElementById('winnerResult').innerHTML = `<p style='color:green;'>มีผู้มีสิทธิ์สุ่มรางวัล ${checkedFulltimeWinners.length} คน</p>`;
+            document.getElementById('winnerResult').innerHTML = "";
             drawWheel();
           }
         }
