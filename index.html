@@ -18,7 +18,6 @@
       min-height: 100vh;
     }
 
-    /* ===== การ์ดหลัก: กว้างเต็มมือถือ / จำกัดความกว้างบนจอใหญ่ ===== */
     .card {
       position: relative;
       background: white;
@@ -31,7 +30,6 @@
       overflow: hidden;
     }
 
-    /* ===== HAMBURGER MENU BUTTON (มุมบนซ้าย) ===== */
     .hamburger-btn {
       position: absolute;
       top: 14px;
@@ -63,7 +61,6 @@
     .hamburger-btn.open span:nth-child(2) { opacity: 0; }
     .hamburger-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-    /* ===== SIDE DRAWER MENU ===== */
     .menu-overlay {
       position: fixed;
       inset: 0;
@@ -114,7 +111,6 @@
     .tab-content { display: none; padding-top: 34px; }
     .tab-content.active { display: block; }
 
-    /* ===== องค์ประกอบภายในแท็บ: ใช้ % / max-width แทนค่าคงที่ ===== */
     #reader { width: 100%; max-width: 400px; margin: 15px auto 0 auto; border-radius: 8px; overflow: hidden; }
     #reader video { width: 100% !important; height: auto !important; }
 
@@ -146,7 +142,6 @@
     .user-list { text-align: left; max-height: 250px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
     .user-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-    /* ===== กล่องตัวเลขจำนวนผู้มีสิทธิ์ลุ้นรางวัล (แท็บสุ่มวงล้อ) ===== */
     .eligible-count-box {
       background: #fff3e0;
       border-radius: 14px;
@@ -166,7 +161,6 @@
       font-weight: bold;
     }
 
-    /* ===== วงล้อ: สเกลตามความกว้างของการ์ดจริง ไม่ตรึงพิกเซล ===== */
     .wheel-container {
       position: relative;
       width: 100%;
@@ -185,7 +179,6 @@
     .winner-table th, .winner-table td { border: 1px solid #ddd; padding: 8px; }
     .winner-table th { background-color: #f2f2f2; text-align: center; }
 
-    /* ===== SUMMARY TAB STYLES ===== */
     .stats-row { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
     .stat-box { flex: 1; min-width: 90px; padding: 12px 4px; border-radius: 10px; }
     .stat-box .num { font-size: 1.6em; font-weight: bold; display: block; line-height: 1.1; }
@@ -201,6 +194,16 @@
     .filter-btn { flex: 1; min-width: 80px; padding: 8px 4px; font-size: 0.8em; border: 1px solid #ccc; background: white; border-radius: 6px; cursor: pointer; }
     .filter-btn.active { background: #007bff; color: white; border-color: #007bff; }
 
+    .summary-status-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .live-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78em; color: #28a745; font-weight: bold; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #28a745; animation: livePulse 1.4s infinite ease-in-out; }
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(40,167,69,0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(40,167,69,0); }
+      100% { box-shadow: 0 0 0 0 rgba(40,167,69,0); }
+    }
+    .last-updated { font-size: 0.72em; color: #999; }
+
     .summary-table-wrap { max-height: 350px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 6px; margin-top: 5px; }
     .summary-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82em; }
     .summary-table th { position: sticky; top: 0; background: #f2f2f2; padding: 8px 6px; border-bottom: 2px solid #ddd; }
@@ -210,7 +213,6 @@
     .pill-checked { background: #d4edda; color: #1e7e34; }
     .pill-notchecked { background: #f8d7da; color: #c82333; }
 
-    /* ===== POPUP MODAL: ประกาศผู้โชคดี ===== */
     .winner-modal-overlay {
       position: fixed;
       inset: 0;
@@ -255,10 +257,6 @@
     }
     .winner-modal-close-btn:hover { background: #218838; }
 
-    /* ==========================================================
-       RESPONSIVE: จอแท็บเล็ต / โน้ตบุ๊ก / เดสก์ท็อป (>= 640px)
-       ทำให้การ์ดกว้างขึ้น ไม่ใช่แคบๆ ลอยกลางจอเหมือนบนมือถือ
-       ========================================================== */
     @media (min-width: 640px) {
       body { padding: 30px 15px; }
       .card { max-width: 620px; padding: 30px 35px; }
@@ -270,7 +268,6 @@
       body { display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
       .card { max-width: 760px; padding: 36px 44px; }
 
-      /* ตารางค้นหา/สรุป ใช้พื้นที่แนวนอนที่กว้างขึ้นแทนการบีบ */
       .user-item { padding: 12px 14px; }
       .summary-table-wrap { max-height: 480px; }
       .summary-table { font-size: 0.9em; }
@@ -278,7 +275,6 @@
       .wheel-container { max-width: 340px; }
       #reader { max-width: 480px; }
 
-      /* ปุ่มไม่ต้องยืดเต็มความกว้างมหาศาลบนจอใหญ่ ดูสมส่วนขึ้น */
       .btn-main, .btn-start { max-width: 420px; margin-left: auto; margin-right: auto; }
     }
 
@@ -289,15 +285,12 @@
 </head>
 <body>
 
-  <!-- ปุ่มแฮมเบอร์เกอร์มุมบนซ้าย -->
   <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="เมนู">
     <span></span><span></span><span></span>
   </button>
 
-  <!-- ฉากหลังคลิกเพื่อปิดเมนู -->
   <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 
-  <!-- เมนูแบบเลื่อนออกด้านซ้าย -->
   <nav class="drawer-menu" id="drawerMenu">
     <div class="drawer-title">🌺 เมนู</div>
     <button class="drawer-item active" data-tab="scan-tab" onclick="switchTab('scan-tab', event)">📷 สแกน</button>
@@ -307,7 +300,6 @@
     <button class="drawer-item" data-tab="summary-tab" onclick="switchTab('summary-tab', event)">📊 สรุป</button>
   </nav>
 
-  <!-- POPUP MODAL: ประกาศผู้โชคดีหลังหมุนวงล้อ -->
   <div class="winner-modal-overlay" id="winnerModalOverlay">
     <div class="winner-modal-box">
       <div class="winner-modal-emoji">🎉🎊🎉</div>
@@ -374,6 +366,11 @@
 
     <!-- TAB 5: SUMMARY -->
     <div id="summary-tab" class="tab-content">
+      <div class="summary-status-row">
+        <span class="live-indicator"><span class="live-dot"></span> LIVE (อัปเดตอัตโนมัติทุก 5 วิ)</span>
+        <span class="last-updated" id="lastUpdatedText">ยังไม่เคยอัปเดต</span>
+      </div>
+
       <div class="stats-row">
         <div class="stat-box stat-total">
           <span class="num" id="statTotal">-</span>
@@ -414,7 +411,7 @@
         </table>
       </div>
 
-      <button class="btn-main" onclick="loadSummaryData()" style="margin-top:10px;">🔄 รีเฟรชข้อมูลสรุป</button>
+      <button class="btn-main" onclick="loadSummaryData()" style="margin-top:10px;">🔄 รีเฟรชข้อมูลสรุป (ทันที)</button>
     </div>
 
   </div>
@@ -431,6 +428,8 @@
     // ===== Summary tab state =====
     let summaryEmployees = [];
     let summaryFilter = 'all'; // 'all' | 'checked' | 'notchecked'
+    let summaryPollInterval = null; // ตัวจับ interval สำหรับ auto-refresh (real-time polling)
+    const SUMMARY_POLL_MS = 5000; // ดึงข้อมูลใหม่ทุก 5 วินาที ปรับตัวเลขนี้ได้ตามต้องการ
 
     function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -456,14 +455,19 @@
       if (tabId === 'batch-draw-tab') {
         loadPrizeOptions();
       }
+
+      // เริ่ม auto-refresh (real-time) เฉพาะตอนอยู่แท็บสรุป และหยุดทันทีเมื่อออกจากแท็บนี้
+      // เพื่อไม่ให้ยิง request ไปเรื่อยๆ ตอนไม่มีใครดูอยู่
       if (tabId === 'summary-tab') {
         loadSummaryData();
+        startSummaryPolling();
+      } else {
+        stopSummaryPolling();
       }
 
       closeMenu();
     }
 
-    // ===== HAMBURGER MENU CONTROL =====
     function toggleMenu() {
       const isOpen = document.getElementById('drawerMenu').classList.contains('open');
       if (isOpen) {
@@ -628,9 +632,6 @@
             emp.giftClaimed === false
           );
 
-          // กันรายชื่อซ้ำ: ถ้ารหัสพนักงานเดียวกันโผล่มากกว่า 1 แถวในชีท
-          // (ข้อมูลผิดพลาด/พิมพ์ซ้ำ) ให้เหลือรหัสละ 1 คนเท่านั้น
-          // เพื่อไม่ให้คนคนเดียวมีสิทธิ์ลุ้นมากกว่า 1 ครั้ง
           const seenIds = new Set();
           checkedFulltimeWinners = [];
           eligible.forEach(emp => {
@@ -732,7 +733,6 @@
       }, 4000);
     }
 
-    // ===== POPUP MODAL ประกาศผู้โชคดี =====
     function showWinnerModal(winner) {
       document.getElementById('winnerModalName').textContent = winner.name + " (" + winner.id + ")";
       document.getElementById('winnerModalDept').textContent = winner.dept;
@@ -742,7 +742,6 @@
 
     function closeWinnerModal() {
       document.getElementById('winnerModalOverlay').classList.remove('open');
-      // รีเฟรชจำนวนผู้มีสิทธิ์ / วงล้อ หลังปิด popup
       loadLuckyDrawCandidates();
     }
 
@@ -756,7 +755,6 @@
           prizesList = res.data;
           let html = "<option value=''>-- กรุณาเลือกของรางวัล --</option>";
           prizesList.forEach(prize => {
-            // แสดงเฉพาะชื่อของรางวัลใน Dropdown
             html += `<option value="${prize.name}">${prize.name}</option>`;
           });
           select.innerHTML = html;
@@ -766,7 +764,6 @@
       });
     }
 
-    // ฟังก์ชันอัปเดตช่องจำนวนผู้โชคดีให้อัตโนมัติตาม qty ของรางวัลที่เลือก
     function onPrizeChange() {
       const select = document.getElementById('prizeSelect');
       const selectedName = select.value;
@@ -837,24 +834,50 @@
       });
     }
 
-    // ===== TAB 5: SUMMARY =====
-    function loadSummaryData() {
-      document.getElementById('summaryTableBody').innerHTML =
-        "<tr><td colspan='5' style='text-align:center; color:gray; padding:15px;'>⏳ กำลังโหลดข้อมูล...</td></tr>";
+    // ===== TAB 5: SUMMARY (with real-time auto-refresh) =====
 
-      callAppsScript("getAll", {}, function(res) {
+    function startSummaryPolling() {
+      stopSummaryPolling();
+      summaryPollInterval = setInterval(function () {
+        loadSummaryData(true);
+      }, SUMMARY_POLL_MS);
+    }
+
+    function stopSummaryPolling() {
+      if (summaryPollInterval) {
+        clearInterval(summaryPollInterval);
+        summaryPollInterval = null;
+      }
+    }
+
+    function loadSummaryData(silent) {
+      if (!silent || summaryEmployees.length === 0) {
+        document.getElementById('summaryTableBody').innerHTML =
+          "<tr><td colspan='5' style='text-align:center; color:gray; padding:15px;'>⏳ กำลังโหลดข้อมูล...</td></tr>";
+      }
+
+      callAppsScript("getAll", {}, function (res) {
         if (res.success) {
           summaryEmployees = res.data;
           updateSummaryStats();
           renderSummaryTable();
-        } else {
+          updateLastUpdatedText();
+        } else if (!silent) {
           document.getElementById('summaryTableBody').innerHTML =
             "<tr><td colspan='5' style='text-align:center; color:red; padding:15px;'>❌ โหลดข้อมูลไม่สำเร็จ</td></tr>";
         }
-      }, function(err) {
-        document.getElementById('summaryTableBody').innerHTML =
-          `<tr><td colspan='5' style='text-align:center; color:red; padding:15px;'>❌ ${err}</td></tr>`;
+      }, function (err) {
+        if (!silent) {
+          document.getElementById('summaryTableBody').innerHTML =
+            `<tr><td colspan='5' style='text-align:center; color:red; padding:15px;'>❌ ${err}</td></tr>`;
+        }
       });
+    }
+
+    function updateLastUpdatedText() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('lastUpdatedText').textContent = "อัปเดตล่าสุด " + timeStr + " น.";
     }
 
     function updateSummaryStats() {
@@ -882,11 +905,9 @@
       const tbody = document.getElementById('summaryTableBody');
 
       let filtered = summaryEmployees.filter(emp => {
-        // กรองตามสถานะที่เลือก (ทั้งหมด / เช็คอินแล้ว / ยังไม่เช็คอิน)
         if (summaryFilter === 'checked' && !emp.checked) return false;
         if (summaryFilter === 'notchecked' && emp.checked) return false;
 
-        // กรองตามคำค้นหา (รหัส หรือ ชื่อ)
         if (keyword === "") return true;
         return emp.id.toLowerCase().includes(keyword) || emp.name.toLowerCase().includes(keyword);
       });
@@ -916,6 +937,16 @@
 
       tbody.innerHTML = html;
     }
+
+    document.addEventListener('visibilitychange', function () {
+      const summaryTabActive = document.getElementById('summary-tab').classList.contains('active');
+      if (document.hidden) {
+        stopSummaryPolling();
+      } else if (summaryTabActive) {
+        loadSummaryData(true);
+        startSummaryPolling();
+      }
+    });
   </script>
 </body>
 </html>
